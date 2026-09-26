@@ -1,5 +1,12 @@
 \documentclass{article}
-\usepackage[final]{neurips}
+% Build mode. This is the arXiv preprint: NeurIPS formatting, author named, no
+% venue notice. [final] would stamp "NeurIPS 2025" in the footer -- a false
+% acceptance claim -- and [preprint] stamps "Under review". For an anonymous
+% venue submission, drop the option entirely and restore the anonymous \author.
+\usepackage[preprint]{neurips}
+\makeatletter
+\renewcommand{\@noticestring}{}
+\makeatother
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -13,9 +20,8 @@
 Outcome Attribution in Agent Memory}
 
 \author{%
-  Anonymous Author(s)\\
-  Affiliation\\
-  \texttt{email}
+  Carlos Inostroza\\
+  \texttt{c.inostroza@gmail.com}
 }
 
 \begin{document}
