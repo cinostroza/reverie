@@ -76,7 +76,8 @@ def panel_density(ax) -> None:
     lose = [xi for xi, r, v in zip(x, curves["replay"], curves["none"]) if r >= v]
     if lose:
         ax.axvspan(min(x) * 0.8, max(lose) * 1.45, color=GREY, alpha=0.10, lw=0)
-        ax.text(min(x) * 0.9, ax.get_ylim()[1], " replay wins", va="top", ha="left",
+        # Right-aligned at the top of the shaded band, clear of the legend.
+        ax.text(max(lose) * 1.4, ax.get_ylim()[1], "replay wins ", va="top", ha="right",
                 fontsize=8, color=GREY, style="italic")
 
     ax.axhline(1 / 6, color=GREY, lw=0.9, ls=":", zorder=0)

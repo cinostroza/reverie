@@ -3,6 +3,10 @@
 % venue notice. [final] would stamp "NeurIPS 2025" in the footer -- a false
 % acceptance claim -- and [preprint] stamps "Under review". For an anonymous
 % venue submission, drop the option entirely and restore the anonymous \author.
+% neurips.sty loads natbib in author-year mode; the bibliography below is numeric
+% (plain), and the mismatch is a hard error when building from main.bbl alone --
+% which is exactly how arXiv builds.
+\PassOptionsToPackage{numbers,compress}{natbib}
 \usepackage[preprint]{neurips}
 \makeatletter
 \renewcommand{\@noticestring}{}
@@ -59,8 +63,9 @@ before should do it better the second time, and the memory layer should work out
 own which of its stored memories deserve trust. The mechanism most often proposed for
 that second half is \emph{outcome attribution}---log which memories a retrieval
 surfaced, observe whether the resulting task succeeded, and update a per-memory utility
-estimate accordingly. A recent survey of this area catalogues 47 credit-assignment
-methods published between 2024 and early 2026.
+estimate accordingly. It is a crowded area: seven of the credit-assignment methods we
+cite appeared in the first eight months of 2026
+alone~\cite{memt,treecredit,memoryr2,metacog,himpo,attrimem,romerl}.
 
 We built such a system and could not make attribution work.
 
@@ -89,6 +94,9 @@ rather than to ask whether the reward is the right lever.
 \item \texttt{reverie-bench}, a benchmark whose controlled variable is repetition
   density and whose baseline is budget-matched history-stuffing rather than
   ``memory off''---a distinction that reverses the headline result (\S\ref{sec:bench}).
+\item Two evaluation choices that silently decide the headline---the draw of the hidden
+  rule set, and whether the cold start is scored---each of which flips the sign of the
+  retrieval result in our own system (\S\ref{sec:protocol}).
 \item A measured null for outcome attribution across three independent ablations, with
   an arithmetic account (credit mass $=$ outcomes $\div$ nodes) that independently
   reproduces the ``Memory-Reward Trap'' named concurrently by~\cite{romerl}
@@ -99,9 +107,6 @@ rather than to ask whether the reward is the right lever.
 \item A negative result on our own proposed fix: an over-generalisation guard, evaluated
   against predictions locked before running, which fires correctly and changes nothing
   (\S\ref{sec:guard}).
-\item Two evaluation choices that silently decide the headline---the draw of the hidden
-  rule set, and whether the cold start is scored---each of which flips the sign of the
-  retrieval result in our own system (\S\ref{sec:protocol}).
 \end{itemize}
 
 \section{\texttt{reverie-bench}}

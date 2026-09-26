@@ -31,7 +31,7 @@ plus a channel for humans to teach*, on workloads where situations recur.
 | Quarantine (design goal G8) | ❌ does not fire; G8 unsatisfied |
 | Over-generalisation guard | ⚠️ built, fires correctly, changes nothing (E12) |
 | LLM distiller | ❌ never built — **the biggest untested lever** |
-| Paper draft | ✅ `paper/main.tex`, ~3630 words, NeurIPS D&B, **never compiled** (no TeX) |
+| Paper | ✅ compiles clean (8 pp), arXiv-ready; front matter is the non-anonymous preprint |
 | Figure 1 | ✅ `paper/figures/fig1.pdf`, built by `experiments/_figure1.py` |
 | Notebooks E1–E6 | ✅ regenerated and re-executed 2026-09-04 against current engine |
 | E7–E13 | ✅ now real drivers: `_run_sweeps.py` + `_analyse.py`, results cached as JSON |
@@ -157,25 +157,24 @@ Use the `landscape` sweep (8 × 6) for anything you intend to publish.
 
 ---
 
-## 6. Immediate blocker: no LaTeX
+## 6. Building the paper
 
-`paper/main.tex` has never been compiled. As of this writing there is **no TeX
-installation on the machine** — not on the Bash or PowerShell PATH, not on the persisted
-machine or user PATH, no `pdflatex.exe` anywhere on `C:\`, no TeX directories, and no WSL
-distro with it (only `docker-desktop`). A completed Windows installer would have written a
-PATH entry; there isn't one.
+There is still no system TeX install. The paper is built with **tectonic**, a single
+self-contained binary (no install, no PATH change): download the Windows zip from
+github.com/tectonic-typesetting/tectonic/releases, then
 
-Three ways forward, easiest first:
+    tectonic -X compile paper/main.tex --keep-intermediates
 
-1. **Overleaf** — upload the whole `paper/` directory. Zero local setup, compiles
-   immediately. Recommended for a first look.
-2. **Docker** — the CLI is installed but the daemon was stopped. Start Docker Desktop, then
-   a TeX Live image compiles it with no local install (expect a multi-GB pull).
-3. **Install MiKTeX or TeX Live**, then **open a new terminal** — PATH changes don't reach
-   already-running shells.
+It fetches the packages it needs on first run. `--keep-intermediates` keeps `main.bbl`,
+which arXiv needs because it does **not** run BibTeX. The arXiv upload is exactly:
+`main.tex`, `neurips.sty`, `main.bbl`, `figures/fig1.pdf`. Always test-compile that set in
+an empty directory: that check caught a natbib author-year/numeric clash that the full
+build silently tolerated and arXiv would have rejected.
 
-The full NeurIPS template (`neurips.sty`, `Makefile`) is intact in `paper/`, so
-`latexmk -pdf main.tex` should work once a toolchain exists.
+Front matter is currently the **arXiv preprint** (author named, venue notice blanked).
+Do not use `[final]`: it prints "NeurIPS 2025" in the footer, which reads as a false
+acceptance claim. For an anonymous venue submission, drop the option and restore the
+anonymous `uthor`.
 
 ---
 
@@ -184,10 +183,9 @@ The full NeurIPS template (`neurips.sty`, `Makefile`) is intact in `paper/`, so
 *Items 1 and 3 of the previous list are done: all six notebooks were re-executed against
 the current engine, E7–E13 now have real drivers, and Figure 1 is built. What remains:*
 
-1. **Compile the paper** (§6) and read it end to end. Still the blocker — there is no TeX
-   toolchain on this machine, so `main.tex` has never been rendered. Figure 1 is now
-   referenced via `\includegraphics{figures/fig1.pdf}`, so the figure path needs checking
-   on the first successful build.
+1. **Submit to arXiv** (author's account). Compiled and read end to end on 2026-09-26.
+   Before submitting, make the repo public if the paper is to claim a code release: it
+   says "we release reverie-bench", and github.com/cinostroza/reverie is private.
 
 2. **Fill the NeurIPS checklist.** Required for D&B, not started.
 
