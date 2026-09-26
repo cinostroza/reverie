@@ -1,0 +1,183 @@
+{
+ "2308.10144": {
+  "title": "ExpeL: LLM Agents Are Experiential Learners",
+  "authors": [
+   "Andrew Zhao",
+   "Daniel Huang",
+   "Quentin Xu",
+   "Matthieu Lin",
+   "Yong-Jin Liu",
+   "Gao Huang"
+  ],
+  "year": "2023"
+ },
+ "2607.21106": {
+  "title": "AttriMem: Attribution-Guided Process Feedback for Agent Memory Construction",
+  "authors": [
+   "Qinfeng Li",
+   "Yuntai Bao",
+   "Xinyan Yu",
+   "Hongze Chen",
+   "Yanming Liu",
+   "Huifeng Zhu",
+   "Yier Jin",
+   "Jintao Chen",
+   "Wenqi Zhang",
+   "Xuhong Zhang"
+  ],
+  "year": "2026"
+ },
+ "2601.02744": {
+  "title": "SYNAPSE: Empowering LLM Agents with Episodic-Semantic Memory via Spreading Activation",
+  "authors": [
+   "Hanqi Jiang",
+   "Junhao Chen",
+   "Yi Pan",
+   "Ling Chen",
+   "Weihang You",
+   "Yifan Zhou",
+   "Ruidong Zhang",
+   "Andrea Sikora",
+   "Lin Zhao",
+   "Yohannes Abate",
+   "Tianming Liu"
+  ],
+  "year": "2026"
+ },
+ "2605.30159": {
+  "title": "Meta-Cognitive Memory Policy Optimization for Long-Horizon LLM Agents",
+  "authors": [
+   "Ziyan Liu",
+   "Zhezheng Hao",
+   "Yeqiu Chen",
+   "Hong Wang",
+   "Jingren Hou",
+   "Ruiyi Ding",
+   "Yongkang Yang",
+   "Wence Ji",
+   "Wei Xia",
+   "Feng Liu"
+  ],
+  "year": "2026"
+ },
+ "2606.16285": {
+  "title": "HiMPO: Hindsight-Informed Memory Policy Optimization for Less-Entangled Credit in Long-Horizon Agents",
+  "authors": [
+   "Jiangze Yan",
+   "Yi Shen",
+   "Wenjing Zhang",
+   "Jieyun Huang",
+   "Zhaoxiang Liu",
+   "Ning Wang",
+   "Kai Wang",
+   "Shiguo Lian"
+  ],
+  "year": "2026"
+ },
+ "2601.23014": {
+  "title": "Mem-T: Densifying Rewards for Long-Horizon Memory Agents",
+  "authors": [
+   "Yanwei Yue",
+   "Boci Peng",
+   "Xuanbo Fan",
+   "Jiaxin Guo",
+   "Qiankun Li",
+   "Yan Zhang"
+  ],
+  "year": "2026"
+ },
+ "2604.12007": {
+  "title": "When to Forget: A Memory Governance Primitive",
+  "authors": [
+   "Baris Simsek"
+  ],
+  "year": "2026"
+ },
+ "2508.06433": {
+  "title": "Memp: Exploring Agent Procedural Memory",
+  "authors": [
+   "Runnan Fang",
+   "Yuan Liang",
+   "Xiaobin Wang",
+   "Jialong Wu",
+   "Shuofei Qiao",
+   "Pengjun Xie",
+   "Fei Huang",
+   "Huajun Chen",
+   "Ningyu Zhang"
+  ],
+  "year": "2025"
+ },
+ "2605.12978": {
+  "title": "Useful Memories Become Faulty When Continuously Updated by LLMs",
+  "authors": [
+   "Dylan Zhang",
+   "Yanshan Lin",
+   "Zhengkun Wu",
+   "Yihang Sun",
+   "Bingxuan Li",
+   "Dianqi Li",
+   "Hao Peng"
+  ],
+  "year": "2026"
+ },
+ "2606.23127": {
+  "title": "Managing Procedural Memory in LLM Agents: Control, Adaptation, and Evaluation",
+  "authors": [
+   "Julia Belikova",
+   "Rauf Parchiev",
+   "Evgeny Egorov",
+   "Grigorii Davydenko",
+   "Gleb Gusev",
+   "Andrey Savchenko",
+   "Maksim Makarenko"
+  ],
+  "year": "2026"
+ },
+ "2606.08275": {
+  "title": "Causal Agent Replay: Counterfactual Attribution for LLM-Agent Failures",
+  "authors": [
+   "Jaineet Shah"
+  ],
+  "year": "2026"
+ },
+ "2605.04811": {
+  "title": "Tree-based Credit Assignment for Multi-Agent Memory System",
+  "authors": [
+   "Marina Mao",
+   "Alexandr Liu",
+   "Pengbo Li",
+   "Siheng Li",
+   "Bo Zhou",
+   "Xiang Wang"
+  ],
+  "year": "2026"
+ },
+ "2605.21768": {
+  "title": "Memory-R2: Fair Credit Assignment for Long-Horizon Memory-Augmented LLM Agents",
+  "authors": [
+   "Sikuan Yan",
+   "Ahmed Bahloul",
+   "Ercong Nie",
+   "Susanna Schwarzmann",
+   "Riccardo Trivisonno",
+   "Volker Tresp",
+   "Yunpu Ma"
+  ],
+  "year": "2026"
+ },
+ "2608.02508": {
+  "title": "RoMeRL: Balancing Feedback Coverage and the Memory-Reward Trap in Self-Evolving Agent Memory via Reduced-Order Utility States",
+  "authors": [
+   "Yi Yang",
+   "Zhennan Chen",
+   "Yihong Zhuang",
+   "Tiehan Fan",
+   "Yinan Chen",
+   "Jian Li",
+   "Jian Yang",
+   "Ying Tai"
+  ],
+  "year": "2026"
+ }
+}

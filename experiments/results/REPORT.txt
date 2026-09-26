@@ -1,0 +1,129 @@
+
+### Canonical numbers -- second half of run -- steady state, the headline
+| arm           | success_2h            | tokens/prompt |  |
+|---------------|-----------------------|---------------|--|
+| none          | 0.151 +/-0.008 (n=16) | 0             |  |
+| replay        | 0.424 +/-0.017 (n=16) | 1,146         |  |
+| reverie       | 0.450 +/-0.025 (n=16) | 794           |  |
+| reverie+human | 0.635 +/-0.020 (n=16) | 704           |  |
+
+  paired over identical seeds:
+    retrieval  (reverie - replay)      +0.026 +/-0.027  (n=16)  NOT significant
+    human review (+human - reverie)    +0.185 +/-0.033  (n=16)  significant
+    memory overall (+human - replay)   +0.211 +/-0.016  (n=16)  significant
+
+### Canonical numbers -- whole run -- includes Reverie's cold start
+| arm           | success               | tokens/prompt |  |
+|---------------|-----------------------|---------------|--|
+| none          | 0.154 +/-0.005 (n=16) | 0             |  |
+| replay        | 0.408 +/-0.010 (n=16) | 1,146         |  |
+| reverie       | 0.363 +/-0.020 (n=16) | 794           |  |
+| reverie+human | 0.509 +/-0.014 (n=16) | 704           |  |
+
+  paired over identical seeds:
+    retrieval  (reverie - replay)      -0.044 +/-0.021  (n=16)  significant
+    human review (+human - reverie)    +0.146 +/-0.021  (n=16)  significant
+    memory overall (+human - replay)   +0.102 +/-0.014  (n=16)  significant
+
+### Attribution ablation (E7/E9)
+| landscape | attr + utility | attr, no utility | no attribution |
+|-----------|----------------|------------------|----------------|
+| static    | 0.460 +/-0.024 | 0.438 +/-0.012   | 0.433 +/-0.021 |
+| drift     | 0.377 +/-0.028 | 0.386 +/-0.027   | 0.351 +/-0.023 |
+| fallible  | 0.525 +/-0.024 | 0.526 +/-0.036   | 0.532 +/-0.047 |
+
+Attribution lift, paired (attr+utility - no_attr):
+  static     +0.027 +/-0.034 (n=8)  NOT significant
+  drift      +0.026 +/-0.035 (n=8)  NOT significant
+  fallible   -0.008 +/-0.058 (n=8)  NOT significant
+
+### Repetition density (E10.1) -- second-half success, chance 0.167
+| contexts (tasks/context) | no human       | human f=0.5    | replay (1200 tok) |
+|--------------------------|----------------|----------------|-------------------|
+| 72 (8.3)                 | 0.449 +/-0.030 | 0.586 +/-0.029 | 0.411 +/-0.029    |
+| 300 (2.0)                | 0.224 +/-0.026 | 0.351 +/-0.041 | 0.316 +/-0.018    |
+| 1200 (0.5)               | 0.197 +/-0.012 | 0.231 +/-0.026 | 0.226 +/-0.031    |
+
+Reverie vs budget-matched replay, paired (positive = Reverie wins):
+    72 contexts  +0.038 +/-0.014 (n=6)  Reverie wins
+   300 contexts  -0.092 +/-0.020 (n=6)  replay wins
+  1200 contexts  -0.029 +/-0.027 (n=6)  replay wins
+
+### Over-generalisation guard (E12) -- H1 is the primary prediction
+| review condition | guard off      | guard on       | paired effect of guard |
+|------------------|----------------|----------------|------------------------|
+| over_general     | 0.435 +/-0.010 | 0.461 +/-0.030 | +0.026 +/-0.031 n.s.   |
+| correct_scope    | 0.640 +/-0.030 | 0.628 +/-0.030 | -0.012 +/-0.047 n.s.   |
+| random_err       | 0.509 +/-0.046 | 0.498 +/-0.037 | -0.011 +/-0.057 n.s.   |
+| adversarial      | 0.486 +/-0.040 | 0.496 +/-0.022 | +0.010 +/-0.034 n.s.   |
+
+### Landscape robustness -- one row per hidden rule set
+| landscape | replay         | reverie        | reverie - replay (paired) |
+|-----------|----------------|----------------|---------------------------|
+| L0        | 0.411 +/-0.029 | 0.445 +/-0.032 | +0.034 +/-0.026           |
+| L1        | 0.379 +/-0.024 | 0.437 +/-0.031 | +0.057 +/-0.025           |
+| L2        | 0.407 +/-0.015 | 0.400 +/-0.041 | -0.007 +/-0.054           |
+| L3        | 0.406 +/-0.024 | 0.440 +/-0.023 | +0.034 +/-0.034           |
+| L4        | 0.390 +/-0.012 | 0.451 +/-0.027 | +0.061 +/-0.029           |
+| L5        | 0.372 +/-0.015 | 0.425 +/-0.036 | +0.053 +/-0.040           |
+| L6        | 0.384 +/-0.021 | 0.443 +/-0.044 | +0.059 +/-0.032           |
+| L7        | 0.392 +/-0.030 | 0.427 +/-0.036 | +0.035 +/-0.064           |
+
+Effect averaged over landscapes (the landscape is now a random effect,
+not an uncontrolled constant):
+  retrieval (reverie - replay)     +0.041 +/-0.016 across 8 landscapes (7/8 positive)  significant
+  human review (+human - reverie)  +0.174 +/-0.021 across 8 landscapes (8/8 positive)  significant
+
+  spread of the retrieval effect: -0.007 to +0.061 -- if this straddles zero, a single-landscape
+  estimate could report either sign.
+
+### Review frequency (E9)
+| condition | success (2nd half)   | whole run | tokens | paired vs none              |
+|-----------|----------------------|-----------|--------|-----------------------------|
+| none      | 0.450 +/-0.025 (n=8) | 0.365     |    789 | -                           |
+| f=0.05    | 0.482 +/-0.029 (n=8) | 0.390     |    684 | +0.032 +/-0.036 n.s.        |
+| f=0.10    | 0.487 +/-0.037 (n=8) | 0.397     |    683 | +0.037 +/-0.042 n.s.        |
+| f=0.25    | 0.502 +/-0.032 (n=8) | 0.407     |    695 | +0.051 +/-0.041 significant |
+| f=0.50    | 0.614 +/-0.031 (n=8) | 0.497     |    695 | +0.163 +/-0.047 significant |
+| f=1.00    | 0.668 +/-0.025 (n=8) | 0.548     |    698 | +0.217 +/-0.034 significant |
+
+### Review quality (E9)
+| condition | success (2nd half)   | whole run | tokens | paired vs none              |
+|-----------|----------------------|-----------|--------|-----------------------------|
+| none      | 0.446 +/-0.018 (n=6) | 0.353     |    788 | -                           |
+| acc=0.4   | 0.495 +/-0.024 (n=6) | 0.422     |    702 | +0.049 +/-0.030 significant |
+| acc=0.6   | 0.513 +/-0.057 (n=6) | 0.426     |    701 | +0.067 +/-0.047 significant |
+| acc=0.8   | 0.592 +/-0.037 (n=6) | 0.490     |    702 | +0.147 +/-0.035 significant |
+| acc=1.0   | 0.610 +/-0.026 (n=6) | 0.499     |    707 | +0.164 +/-0.022 significant |
+
+### Reviewer error modes (E10.2)
+| condition           | success (2nd half)   | whole run | tokens | paired vs none              |
+|---------------------|----------------------|-----------|--------|-----------------------------|
+| none                | 0.440 +/-0.022 (n=8) | 0.355     |    778 | -                           |
+| random/acc=0.8      | 0.555 +/-0.026 (n=8) | 0.456     |    696 | +0.115 +/-0.024 significant |
+| random/acc=0.5      | 0.511 +/-0.035 (n=8) | 0.423     |    694 | +0.071 +/-0.043 significant |
+| systematic/acc=0.8  | 0.563 +/-0.038 (n=8) | 0.464     |    703 | +0.124 +/-0.050 significant |
+| systematic/acc=0.5  | 0.473 +/-0.027 (n=8) | 0.385     |    691 | +0.034 +/-0.036 n.s.        |
+| adversarial/acc=0.8 | 0.561 +/-0.036 (n=8) | 0.467     |    704 | +0.122 +/-0.045 significant |
+| adversarial/acc=0.5 | 0.487 +/-0.027 (n=8) | 0.405     |    697 | +0.047 +/-0.038 significant |
+
+### Over-generalisation (E10.3)
+| condition     | success (2nd half)    | whole run | tokens | paired vs none              |
+|---------------|-----------------------|-----------|--------|-----------------------------|
+| none          | 0.451 +/-0.014 (n=16) | 0.367     |    787 | -                           |
+| correct_scope | 0.614 +/-0.020 (n=16) | 0.496     |    701 | +0.164 +/-0.021 significant |
+| over_general  | 0.435 +/-0.017 (n=16) | 0.350     |    659 | -0.016 +/-0.015 significant |
+
+### Stale human knowledge (E10.4)
+| condition         | success (2nd half)   | whole run | tokens | paired vs drift/none        |
+|-------------------|----------------------|-----------|--------|-----------------------------|
+| drift/none        | 0.369 +/-0.017 (n=8) | 0.326     |    766 | -                           |
+| drift/human       | 0.475 +/-0.026 (n=8) | 0.430     |    696 | +0.107 +/-0.031 significant |
+| drift/human_stale | 0.432 +/-0.029 (n=8) | 0.401     |    707 | +0.063 +/-0.022 significant |
+
+### Scope guard with no reviewer at all (E12 follow-up)
+| condition             | success (2nd half)    | whole run | tokens | paired vs no_review/guard=False |
+|-----------------------|-----------------------|-----------|--------|---------------------------------|
+| no_review/guard=True  | 0.467 +/-0.019 (n=16) | 0.375     |    769 | +0.006 +/-0.020 n.s.            |
+| no_review/guard=False | 0.461 +/-0.018 (n=16) | 0.366     |    788 | -                               |
+

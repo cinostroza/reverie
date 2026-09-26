@@ -1,0 +1,463 @@
+\documentclass{article}
+\usepackage[final]{neurips}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{graphicx}
+
+\title{\texttt{reverie-bench}: Repetition Density and the Limits of\\
+Outcome Attribution in Agent Memory}
+
+\author{%
+  Anonymous Author(s)\\
+  Affiliation\\
+  \texttt{email}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We introduce \texttt{reverie-bench}, a benchmark for agent memory in which the
+controlled variable is \emph{repetition density}---how often an agent meets the same
+situation twice---and we use it to show that outcome attribution, the mechanism a
+growing line of work builds on, does not improve task performance. Attribution is
+appealing because it promises self-correcting memory: memories that correlate with
+failure demote themselves, so no human has to curate. We measure it three ways in one
+system---on episodic memory, under environment drift, and under the exact conditions we
+pre-registered as necessary for it to succeed---and find zero lift each time, with an
+arithmetic account of why: total credit mass equals the number of task outcomes, so a
+graph holding more memories than the agent has completed tasks cannot give any single
+memory enough evidence to rank on. In the same system, on the same benchmark, roughly
+two human-authored lessons per reviewed session deliver $+0.174 \pm 0.021$, against
+$+0.041 \pm 0.016$ for the retrieval machinery alone and no measurable effect for
+attribution---all paired across identical task sequences and averaged over eight
+independently drawn hidden rule sets. Our most consequential finding for benchmark
+design is that repetition density, not scale, decides whether memory beats recency at
+all: at 8.3 tasks per distinct context selective retrieval wins, at 2.0 it loses to
+naive history-stuffing, and at 0.5 both are near chance. We further show that two
+evaluation choices usually left implicit---which hidden rule set is drawn, and whether
+the agent's cold start is scored---each independently flip the sign of the retrieval
+result, and we report both.
+\end{abstract}
+
+\section{Introduction}
+
+Agent memory systems are converging on a common promise: an agent that has done a task
+before should do it better the second time, and the memory layer should work out on its
+own which of its stored memories deserve trust. The mechanism most often proposed for
+that second half is \emph{outcome attribution}---log which memories a retrieval
+surfaced, observe whether the resulting task succeeded, and update a per-memory utility
+estimate accordingly. A recent survey of this area catalogues 47 credit-assignment
+methods published between 2024 and early 2026.
+
+We built such a system and could not make attribution work.
+
+This paper reports that null result with a diagnosed mechanism, together with the
+benchmark that produced it and a positive result that we did not set out to find. Our
+central observation is arithmetic rather than empirical: the total credit available to
+distribute is bounded by the number of task outcomes observed, so a memory graph that
+grows one node per episode necessarily dilutes credit below the level any per-memory
+estimator needs. We measure the consequence directly---a median of one attribution per
+node, and a utility posterior whose lower bound is still exactly the untouched
+$\mathrm{Beta}(1,1)$ value at its median---and show it is not repaired by drift, by
+restricting attribution to the few frequently recalled memories that theory says it
+should suit, or by fixing a credit-assignment bug that was independently suppressing the
+signal.
+
+The same system, however, improves substantially when a human is allowed to write a rule
+into it. That result is not novel on its own---procedural memory learned from feedback
+is established work~\cite{memp,expel}---but the \emph{comparison} is: to our knowledge no
+prior work measures attribution against a human-teaching alternative in one system on
+one benchmark, and the field's response to the attribution problem has uniformly been to
+engineer denser or better-targeted reward~\cite{memt,memoryr2,himpo,treecredit,attrimem}
+rather than to ask whether the reward is the right lever.
+
+\paragraph{Contributions.}
+\begin{itemize}
+\item \texttt{reverie-bench}, a benchmark whose controlled variable is repetition
+  density and whose baseline is budget-matched history-stuffing rather than
+  ``memory off''---a distinction that reverses the headline result (\S\ref{sec:bench}).
+\item A measured null for outcome attribution across three independent ablations, with
+  an arithmetic account (credit mass $=$ outcomes $\div$ nodes) that independently
+  reproduces the ``Memory-Reward Trap'' named concurrently by~\cite{romerl}
+  (\S\ref{sec:attribution}).
+\item A characterisation of human-review error showing the system is robust to reviewers
+  being \emph{wrong} but fragile to reviewers being \emph{vague}, validated against a
+  real language model (\S\ref{sec:human}).
+\item A negative result on our own proposed fix: an over-generalisation guard, evaluated
+  against predictions locked before running, which fires correctly and changes nothing
+  (\S\ref{sec:guard}).
+\item Two evaluation choices that silently decide the headline---the draw of the hidden
+  rule set, and whether the cold start is scored---each of which flips the sign of the
+  retrieval result in our own system (\S\ref{sec:protocol}).
+\end{itemize}
+
+\section{\texttt{reverie-bench}}
+\label{sec:bench}
+
+\paragraph{The baseline problem.}
+Most agent-memory evaluations compare ``memory on'' against ``memory off.'' That
+comparison is rigged: without memory an agent cannot learn across episodes at all, so
+the off arm sits at chance and the on arm wins by construction. We instead baseline
+against what practitioners actually do---paste recent history into the context
+window---capped at a realistic token budget. All arms see byte-identical seeded task
+sequences and share one agent policy, so any difference is attributable to the evidence
+the agent receives and nothing else.
+
+\paragraph{Task families.}
+Each family is a contextual bandit with hidden structure: a task exposes observable
+features and admits several strategies, and hidden rules map features to the strategy
+that works. Features are resampled every episode, so memorising one instance is worth
+nothing and only the feature$\rightarrow$strategy \emph{rule} generalises. Our primary
+family models on-call incident response over 12 services $\times$ 6 symptoms.
+
+\paragraph{Repetition density is the variable that matters.}
+Our first three task families had at most 8 distinct contexts. With a $\sim$31-episode
+recency window, an agent then holds several examples of \emph{every} context it will
+ever see, so recency is guaranteed to contain the relevant precedent and selective
+retrieval cannot beat it. We initially concluded that history-stuffing dominates at
+every token budget. That conclusion was a property of the benchmark, not the system.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig1.pdf}
+\caption{\textbf{Left:} whether selective retrieval beats a recency window is decided by
+repetition density, not by retrieval quality; the shaded region is where budget-matched
+replay wins. \textbf{Right:} what each mechanism is worth, as paired differences with
+cluster-robust 95\% intervals, averaged over eight hidden rule sets. Outcome attribution
+is a null; human review is worth roughly four times the entire retrieval machinery.
+Both panels score the second half of each run (see \S\ref{sec:protocol}).}
+\label{fig:one}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\caption{Repetition density, not landscape size, governs whether retrieval beats
+recency. Landscape grows against a fixed 600-task budget, so tasks-per-context falls.
+Second-half success rate, 6 seeds; chance is 0.167.}
+\label{tab:density}
+\begin{tabular}{lccc}
+\toprule
+Contexts (tasks/context) & Retrieval & \;+\,human review & Replay (1200 tok) \\
+\midrule
+72 \;(8.3) & \textbf{0.449} & \textbf{0.586} & 0.411 \\
+300 \;(2.0) & 0.224 & 0.351 & \textbf{0.316} \\
+1200 \;(0.5) & 0.197 & 0.231 & \textbf{0.226} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:density} and Figure~\ref{fig:one} (left) show why we regard this as the
+benchmark's primary contribution. Retrieval beats recency by $+0.038 \pm 0.014$ at 8.3
+recurrences per context, loses by $-0.092 \pm 0.020$ at 2.0, and at 0.5 both arms are
+within $0.06$ of chance. The mechanism is not subtle: retrieval can only surface a
+precedent that exists, and below roughly two recurrences per context there is usually
+nothing to find, at which point replay's breadth beats precision because neither has the
+answer. Any agent-memory result reported without its repetition density is therefore
+under-specified, and a benchmark that does not vary it cannot distinguish a good
+retrieval system from a favourable workload.
+
+\section{Two protocol choices that decide the answer}
+\label{sec:protocol}
+
+Before reporting results we have to fix two things that are usually left implicit. We
+found both by failing to reproduce our own earlier numbers, and each of them
+independently flips the sign of our retrieval result.
+
+\paragraph{The hidden rule set is a random effect, not a constant.}
+Our environment derives its feature$\rightarrow$strategy rules from a seed. Varying only
+the task-sequence seed---the obvious thing to do, and what we did initially---holds those
+rules fixed, so every ``replication'' re-measures one arbitrary landscape and the
+resulting interval describes sampling error that does not include the dominant source of
+variation. Crossing 8 independently drawn rule sets with 6 task seeds, the retrieval
+effect is $+0.041 \pm 0.016$ and positive on 7 of 8 landscapes, but the per-landscape
+estimates range from $-0.007$ to $+0.061$: a single-landscape study is free to report
+anything in that interval, including a null. We report all effects averaged over
+landscapes and give the per-landscape spread.
+
+A related hazard is worth naming because it is invisible: our environment originally
+derived those rules from Python's built-in \texttt{hash}, which is salted per process.
+The same seed therefore produced a different landscape in every interpreter---we measured
+0.368, 0.400 and 0.408 for one nominally fixed configuration---so no published number was
+reproducible even in principle. Benchmarks that hash strings to generate environments
+should check this.
+
+\paragraph{Scoring the cold start changes the conclusion.}
+A memory system begins each run with an empty graph and has to fill it, while a recency
+window is useful from the second task onward. Holding everything else fixed and varying
+only which tasks are scored, retrieval \emph{loses} to budget-matched replay by
+$-0.026 \pm 0.015$ over the whole 600-task run and \emph{wins} by $+0.041 \pm 0.016$ over
+the second half (both averaged over the same 8 landscapes; on the single canonical
+landscape the whole-run loss is $-0.044 \pm 0.021$). Neither is wrong, but they answer
+different
+questions: whole-run scoring measures a fixed-length deployment that pays the cold start
+once per run, second-half scoring measures the steady state a long-lived deployment
+actually occupies. We report the second half throughout, because the claims at issue are
+about accumulated memory, and we state the whole-run figure wherever it differs
+materially. Human review is positive on both metrics and does not depend on the choice.
+
+\section{Outcome attribution does not lift task performance}
+\label{sec:attribution}
+
+We implement attribution as a per-memory $\mathrm{Beta}$ posterior over ``did
+participating in a retrieval correlate with success,'' ranked by its lower confidence
+bound, with credit apportioned across the memories a retrieval surfaced and weighted by
+evidence tier. This is a faithful implementation of the standard recipe.
+
+\begin{table}[t]
+\centering
+\caption{Attribution lift, 600 tasks, 8 seeds. The drift condition rewrites half the
+landscape at task 300, so stale memories become actively harmful; the fallible-lesson
+condition supplies few, frequently-recalled, sometimes-wrong memories, which we
+pre-registered as the condition under which attribution should succeed.}
+\label{tab:attribution}
+\begin{tabular}{lcccc}
+\toprule
+Condition & attribution\,+\,utility & attribution only & no attribution & paired lift \\
+\midrule
+Static landscape & 0.460 $\pm$ 0.024 & 0.438 $\pm$ 0.012 & 0.433 $\pm$ 0.021
+  & $+0.027 \pm 0.034$ \\
+Environment drift & 0.377 $\pm$ 0.028 & 0.386 $\pm$ 0.027 & 0.351 $\pm$ 0.023
+  & $+0.026 \pm 0.035$ \\
+Fallible lessons & 0.525 $\pm$ 0.024 & 0.526 $\pm$ 0.036 & 0.532 $\pm$ 0.047
+  & $-0.008 \pm 0.058$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:attribution} reports no significant lift in any of the three; every
+paired interval contains zero, and the point estimates are smaller than the effect of
+turning the retrieval machinery on. The third row is the important one: we predicted in
+advance that attribution would fail on episodic memory (many nodes, each recalled once)
+and succeed on a small set of frequently-recalled rules, some of which are wrong. We
+then constructed that condition and it still failed---indeed it is the one row whose
+point estimate is negative.
+
+\paragraph{Why: credit mass is bounded by outcomes.}
+Every completed task yields one outcome, and that outcome is divided among the memories
+its retrieval surfaced. Total credit in the system is therefore bounded by the number of
+outcomes, independent of graph size:
+\[
+\underbrace{600}_{\text{outcomes}} \;\text{of credit distributed over}\;
+\underbrace{\sim700}_{\text{nodes}} \;\Longrightarrow\;
+0.86\ \text{units of evidence per node},
+\]
+before that unit is further split across the $\sim$9 memories in a typical brief. We
+measure the consequence on a live graph: a median of \textbf{one} attribution per node,
+and a utility lower bound whose 25th and 50th percentiles are $0.249$ and $\mathbf{0.250}$
+---exactly $\mathrm{Beta}(1,1)$, the untouched prior---against a 75th percentile of
+$0.276$. Half the graph has not moved at all, and 31\% sits on the prior exactly. The
+distribution is severely skewed rather than merely sparse: mean attributions per node is
+33 against a median of 1, so a handful of hub memories absorb the credit while the
+episodic mass that retrieval actually depends on receives a single observation each.
+
+This is not a tuning failure, and it worsens as a deployment runs: per-episode retention
+grows the denominator while the numerator grows only with completed tasks. Concurrent
+work~\cite{romerl} names the same failure the ``Memory-Reward Trap'' and identifies the
+same two causes---utilities dispersed over an expanding state space, and reward
+contaminating co-retrieved memories. We regard that independent agreement as the
+strongest evidence that our result is a property of the approach rather than of our
+implementation.
+
+\paragraph{A bug we fixed, which did not rescue it.}
+Our retrieval path admits exact precedents through a channel that bypasses spreading
+activation. Because credit share was computed from activation, those memories---the ones
+doing most of the work---received near-zero credit. We fixed this (normalising credit
+within each channel; two other repairs measured worse) and re-ran. Median evidence mass
+moved from 0.81 to 0.54 and the utility range widened slightly. Task performance did not
+move. We report this because it is the obvious reviewer question, and because a
+diagnosed and repaired implementation bug that leaves the null intact strengthens rather
+than weakens it.
+
+\section{Human review: robust to wrong, fragile to vague}
+\label{sec:human}
+
+We replace the attribution channel with a review channel: at session boundaries an
+operator may be asked what \emph{should} have been done, and the answer is stored as a
+procedural memory. What the reviewer supplies that the outcome log does not is a
+statement about the situation \emph{class}---the features under which the action
+applies---which is precisely the claim attribution would have to infer from evidence it
+does not have enough of.
+
+\begin{table}[t]
+\centering
+\caption{Review frequency (left, at perfect accuracy) and reviewer accuracy (right, at
+50\% review). 600 tasks, second-half success; 8 and 6 seeds respectively.}
+\label{tab:human}
+\begin{tabular}{lc@{\hskip 2.5em}lc}
+\toprule
+Review frequency & Success & Reviewer accuracy & Success \\
+\midrule
+none & 0.450 & none & 0.446 \\
+5\% & 0.482 & 0.4 & 0.495 \\
+10\% & 0.487 & 0.6 & 0.513 \\
+25\% & 0.502 & 0.8 & 0.592 \\
+50\% & 0.614 & 1.0 & \textbf{0.610} \\
+100\% & \textbf{0.668} & & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Benefit is monotonic in both axes (Table~\ref{tab:human}) and, notably, does
+\emph{not} saturate---at 72 contexts and two lessons per reviewed session, coverage is
+still filling in at 100\% review, where the lift reaches $+0.217 \pm 0.034$. The binding
+constraint is coverage, not reviewer quality.
+
+\paragraph{Error taxonomy.}
+Against a no-review baseline of 0.440, reviewers who are simply \emph{wrong} are
+survivable, and in fact still net positive: at 50\% accuracy, random error yields 0.511,
+a stable systematic misconception 0.473, and an adversarial reviewer who always names the
+worst available action 0.487. Structured error is no worse than random, which we did not
+expect---a systematic mistake repeats rather than cancelling, so it should entrench. The
+mechanism that prevents this is that episodes cross-check lessons: a wrong rule coexists
+with episodes recording that action failing, and the agent sees both. Halving reviewer
+accuracy costs roughly half the benefit; it does not invert it.
+
+A reviewer who is \emph{vague} is not survivable. When the reviewer drops a feature that
+mattered---a correct-sounding rule stated over too broad a scope---performance falls to
+\textbf{0.435} against a no-review baseline of 0.451, a paired loss of
+$-0.016 \pm 0.015$, while the same reviewer scoping correctly reaches 0.614. This is the
+only condition we measured in which human review makes the agent worse than silence.
+The absolute cost is small; what makes it notable is the sign, since every other way of
+being a bad reviewer is still better than having none.
+
+\paragraph{Validation with a language model.}
+Because the cross-check property carries this result, and because our agent policy is
+scripted, we tested it directly on a real model. We constructed briefs containing one
+confident wrong lesson plus $N$ pairs of contradicting episodes and asked
+\texttt{claude-opus-5} to choose (10 trials per condition). At $N\!=\!0$ the model
+follows the wrong lesson 10/10; at $N\!=\!1$ it splits 4/6; at $N\!\geq\!2$ it follows
+the evidence 10/10. The property holds, and the model is marginally \emph{more}
+lesson-loyal than our scripted policy---meaning the scripted agent is not flattering the
+result.
+
+The $N\!=\!0$ column also explains the failure mode mechanistically. Over-generalisation
+is dangerous precisely because it claims authority over contexts that have no local
+episodes to contradict it, which is exactly where both agents follow a wrong rule
+unanimously.
+
+\section{A guard that works and does not help}
+\label{sec:guard}
+
+Over-generalisation is named in the literature but unguarded;~\cite{belikova2026procedural}
+observes that skills ``become specialized to role-specific workflows and lose
+effectiveness under transfer'' and proposes no mechanism. We designed one and locked four
+predictions before running it.
+
+The guard tests the \emph{uniformity} a scope claim implies: if episodes inside a
+lesson's claimed scope split cleanly into succeeding and failing groups along some
+entity the lesson does not name, the scope is too coarse. It is deliberately
+action-agnostic---it never reads the recommended action---and narrows rather than
+deletes.
+
+\begin{table}[t]
+\centering
+\caption{The over-generalisation guard against predictions locked before running.}
+\label{tab:guard}
+\begin{tabular}{llll}
+\toprule
+& Prediction & Measured & Verdict \\
+\midrule
+H1 & over-general recovers toward 0.614 & $0.435\!\to\!0.461\;(\pm 0.031)$
+   & \textbf{refuted} \\
+H2 & does \emph{not} help action errors & $-0.011$, $+0.010$; both n.s. & confirmed \\
+H3 & small cost under correct review & $-0.012 \pm 0.047$ & confirmed \\
+H4 & benefit tracks repetition density & no benefit to track & vacuous \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The guard fires---it narrows or demotes tens of nodes per run, against none with it
+disabled---and changes nothing (Table~\ref{tab:guard}). The reason is structural, and H1
+was impossible as written: narrowing an over-general rule yields a correct rule for one
+context and leaves the rest with \emph{no} rule, falling back to the no-review baseline.
+A guard can remove harm but cannot create coverage, so its ceiling is the 0.451 of not
+being reviewed at all, not the 0.614 of being reviewed well. We also verified that it is
+inert when no reviewer is present ($+0.006 \pm 0.020$), which matters because
+consolidation promotes corroborated episodes into rules on its own and the guard
+therefore has candidates to act on even in the unreviewed arm. We report this because
+locking H1 in advance is what made its impossibility visible rather than arguable, and
+because H2 and H3 passing
+establish that the mechanism is correctly scoped and nearly free---a well-behaved
+detector aimed at a problem it cannot solve.
+
+\section{Related work}
+
+\paragraph{Credit assignment for agent memory.}
+The dominant response to sparse memory reward is to make it denser or better
+targeted: densified rewards~\cite{memt}, backpropagation through memory-operation
+trees~\cite{treecredit}, fairer apportionment~\cite{memoryr2}, disentangling
+tool- from reasoning- from memory-induced error~\cite{himpo}, belief-entropy
+self-supervision~\cite{metacog}, and token-level attribution~\cite{attrimem}.
+\cite{romerl} is closest to our diagnosis, naming the Memory-Reward Trap and proposing
+reduced-order utility states---a dimensionality reduction that concentrates feedback on
+bounded support. Our contribution is orthogonal: rather than making the credit signal
+usable, we measure what is lost by not using it at all, and find the answer is nothing.
+\cite{causalreplay} notes separately that agent-removal counterfactuals carry a bias
+more samples cannot remove, consistent with our finding that ablation contributed
+nothing.
+
+\paragraph{Procedural memory.}
+Learning reusable procedures from execution feedback is established~\cite{memp,expel},
+and~\cite{belikova2026procedural} benchmarks the specialisation/generalisation tension
+we exploit. \cite{faulty} shows memories degrade under repeated self-update, which is
+the failure our review channel is exposed to and our error taxonomy measures.
+\cite{whentoforget} treats forgetting as a governance primitive, relevant to our
+finding that quarantine does not fire.
+
+\paragraph{Retrieval.}
+\cite{synapse} applies spreading activation to episodic-semantic memory. We find
+spreading activation helps for multi-hop association and actively harms exact-precedent
+lookup, and that the two require separate retrieval paths---a distinction we have not
+seen drawn elsewhere.
+
+\section{Limitations}
+
+\paragraph{The agent is scripted.} Our primary results use a similarity-weighted voting
+policy, not a language model. This isolates the memory mechanism from model capability,
+but it means our numbers describe an idealised consumer of memory. \S\ref{sec:human}
+validates the single property most load-bearing for our conclusions against a real
+model, on 40 calls; the remainder is unvalidated in this respect. We regard this as the
+most serious limitation.
+
+\paragraph{One landscape family.} We average over eight independently drawn hidden rule
+sets, which removes the landscape as an uncontrolled constant, but all eight come from a
+single generator with the same structural assumptions: features are resampled every
+episode, rules are deterministic, and a fixed fraction of them generalise across
+services. The density finding may not transfer to workloads whose structure differs in
+other ways, and eight draws bound sampling error rather than generator misspecification.
+
+\paragraph{No model-authored lessons.} Our system has no LLM distiller, so all
+procedural memory is human-authored. A distiller might supply lessons at a fraction of
+the human cost, and if so the review-frequency curve in Table~\ref{tab:human} understates
+what is reachable. This is the most important untested capability.
+
+\paragraph{Null results are bounded by implementation.} We report a null for attribution
+as \emph{we} implement it. We have made the implementation faithful, diagnosed and fixed
+one bug that suppressed the signal, and offered an arithmetic account that does not
+depend on our code---but a sufficiently different estimator might behave differently.
+The arithmetic bound, not our implementation, is the claim we would defend.
+
+\section{Conclusion}
+
+Outcome attribution is the expensive way to obtain what a human can supply directly.
+Across three ablations it contributed nothing to task performance, for a reason that is
+arithmetic rather than incidental, while roughly two human-authored lessons per reviewed
+session delivered $+0.174 \pm 0.021$---about four times the entire retrieval machinery,
+and the only lever that helps at every repetition density we tested. We release
+\texttt{reverie-bench} because the results that matter most for future work are
+methodological: repetition density decides whether memory beats recency at all, and the
+two protocol choices of \S\ref{sec:protocol}---which hidden rule set is drawn, and
+whether the cold start is scored---each flipped the sign of our own headline. An
+agent-memory number reported without all three cannot be interpreted.
+
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\end{document}

@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "reverie"
+version = "0.1.0.dev0"
+description = "Long-term memory for AI agents that learns which memories are worth having."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Reverie contributors" }]
+keywords = ["agent", "memory", "llm", "knowledge-graph", "mcp"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+
+# The core is deliberately dependency-free: stdlib sqlite3 only.
+# See HLD 4.7 -- "one file, no daemon, for the default case".
+dependencies = []
+
+[project.optional-dependencies]
+# Everything needed to reproduce the published experiments.
+experiments = [
+  "numpy>=1.26",
+  "scipy>=1.11",
+  "pandas>=2.0",
+  "matplotlib>=3.8",
+  "networkx>=3.0",
+  "jupyter>=1.0",
+  "ipykernel>=6.0",
+]
+dev = ["pytest>=8.0", "pytest-cov>=4.0"]
+
+[project.scripts]
+reverie = "reverie.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["reverie"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["error"]
