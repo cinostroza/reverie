@@ -30,3 +30,6 @@ paper/main.pdf
 # OS
 .DS_Store
 Thumbs.db
+
+# Build outputs (PDF, arXiv tarball) -- regenerate, do not commit
+paper/dist/
