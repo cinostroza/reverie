@@ -174,7 +174,7 @@ build silently tolerated and arXiv would have rejected.
 Front matter is currently the **arXiv preprint** (author named, venue notice blanked).
 Do not use `[final]`: it prints "NeurIPS 2025" in the footer, which reads as a false
 acceptance claim. For an anonymous venue submission, drop the option and restore the
-anonymous `uthor`.
+anonymous `\author`.
 
 ---
 
