@@ -313,20 +313,40 @@ def sweep_landscape() -> list[Cell]:
 
 
 def sweep_guard_baseline() -> list[Cell]:
-    """Does the scope guard cost anything when there is no reviewer at all?
+    """Sanity check: the scope guard with no reviewer at all.
 
-    E12 measured the guard only under review, and concluded it was "nearly free"
-    from the correct-scope arm. But consolidation *itself* promotes corroborated
-    episodes into lessons, so the guard has candidates to act on even when no
-    human ever speaks -- a case that was never tested. If it narrows or demotes
-    engine-generated lessons, it degrades the plain retrieval arm, which is
-    exactly the arm whose headline moved after the guard landed.
+    Written when the guard was a suspect for a drop in the retrieval arm. The guard
+    only examines reviewer lessons (procedural nodes with provenance "asserted"),
+    so with no reviewer it has nothing to act on and this arm should match
+    guard-off exactly in expectation. It does (+0.006 +/- 0.020, 16 seeds).
     """
     cells = []
     for s_ in SEEDS_16:
         for guard in (True, False):
             cells.append(_reverie(f"no_review/guard={guard}", s_, "guard_baseline",
                                   config_kw={"consolidation.scope_guard": guard}))
+    return cells
+
+
+def sweep_guard_density() -> list[Cell]:
+    """E12 H4: does the guard's effect grow with repetition density?
+
+    The guard judges a lesson from the episodes inside its claimed scope, so it
+    can only act where episodes have accumulated. H4 predicted its benefit would
+    track density. The main guard sweep runs only at 72 contexts; this adds the
+    two sparser landscapes so H4 is measured on the current engine rather than
+    carried over from the pre-determinism runs.
+    """
+    shapes = {"300": (30, 10), "1200": (60, 20)}
+    okw = dict(frequency=0.5, accuracy=1.0, keep_features=("service",))
+    cells = []
+    for label, (svc, sym) in shapes.items():
+        fkw = dict(n_services=svc, n_symptoms=sym)
+        for guard in (True, False):
+            for s_ in SEEDS_6:
+                cells.append(_reverie(f"{label}/guard={guard}", s_, "guard_density",
+                                      family_kw=fkw, oracle_kw=okw,
+                                      config_kw={"consolidation.scope_guard": guard}))
     return cells
 
 
@@ -342,6 +362,7 @@ SWEEPS: dict[str, Callable[[], list[Cell]]] = {
     "guard": sweep_guard,
     "landscape": sweep_landscape,
     "guard_baseline": sweep_guard_baseline,
+    "guard_density": sweep_guard_density,
 }
 
 

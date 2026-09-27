@@ -121,6 +121,13 @@ not an uncontrolled constant):
 | drift/human       | 0.475 +/-0.026 (n=8) | 0.430     |    696 | +0.107 +/-0.031 significant |
 | drift/human_stale | 0.432 +/-0.029 (n=8) | 0.401     |    707 | +0.063 +/-0.022 significant |
 
+### Scope guard vs repetition density, over-broad review (E12 H4)
+| tasks/context  | guard off      | guard on       | paired effect of guard |
+|----------------|----------------|----------------|------------------------|
+| 8.3 (72 ctx)   | 0.435 +/-0.010 | 0.461 +/-0.030 | +0.026 +/-0.031 n.s.   |
+| 2.0 (300 ctx)  | 0.226 +/-0.030 | 0.238 +/-0.020 | +0.012 +/-0.033 n.s.   |
+| 0.5 (1200 ctx) | 0.181 +/-0.019 | 0.181 +/-0.021 | -0.001 +/-0.027 n.s.   |
+
 ### Scope guard with no reviewer at all (E12 follow-up)
 | condition             | success (2nd half)    | whole run | tokens | paired vs no_review/guard=False |
 |-----------------------|-----------------------|-----------|--------|---------------------------------|

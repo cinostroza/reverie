@@ -50,8 +50,9 @@ def probe(seed: int) -> dict:
     def capture(self) -> None:
         mem = self._mem
         if mem is not None:
-            rows = mem.store.conn.execute(
-                "SELECT id, memory_class, alpha, beta, attributions "
+            conn = mem.store.conn
+            rows = conn.execute(
+                "SELECT id, memory_class, alpha, beta, attributions, type "
                 "FROM nodes WHERE scope_id=? AND state != 'deleted'",
                 (self.scope,),
             ).fetchall()
@@ -59,6 +60,19 @@ def probe(seed: int) -> dict:
             captured["utility"] = {
                 r[0]: mem.attributor.utility(r[0]) for r in rows
             }
+            # Where the credit went. Every attributed outcome distributes one
+            # unit over the nodes its recall activated, so these masses sum to
+            # the number of attributed outcomes.
+            ledger = conn.execute(
+                "SELECT n.type, SUM(a.d_alpha + a.d_beta) FROM attribution_log a "
+                "JOIN nodes n ON n.id = a.node_id WHERE a.reversed = 0 "
+                "GROUP BY n.type"
+            ).fetchall()
+            captured["mass_by_type"] = {r[0]: r[1] for r in ledger}
+            captured["outcomes"], captured["credited"] = conn.execute(
+                "SELECT COUNT(DISTINCT outcome_id), COUNT(*) FROM attribution_log "
+                "WHERE reversed = 0"
+            ).fetchone()
         original_finish(self)
 
     ReverieBackend.finish = capture
@@ -74,7 +88,23 @@ def probe(seed: int) -> dict:
     lessons = [r for r in rows if r[1] == "procedural"]
     at_prior = sum(1 for u in utils.values() if abs(u - PRIOR_LCB) < 1e-9)
 
+    # Evidence mass a node has received = alpha + beta - 2 (the prior's pseudo-counts).
+    mass_by_node_type: dict[str, list[float]] = {}
+    for _id, _cls, alpha, beta, _att, ntype in rows:
+        mass_by_node_type.setdefault(ntype, []).append(alpha + beta - 2.0)
+    total_mass = sum(captured["mass_by_type"].values())
+
     return {
+        "by_type": {
+            t: {
+                "nodes": len(masses),
+                "share": captured["mass_by_type"].get(t, 0.0) / total_mass,
+                "median_mass": statistics.median(masses),
+            }
+            for t, masses in mass_by_node_type.items()
+        },
+        "attributed_outcomes": captured["outcomes"],
+        "nodes_per_outcome": captured["credited"] / captured["outcomes"],
         "seed": seed,
         "success": sum(x["success"] for x in result.records) / len(result.records),
         "n_nodes": len(rows),
@@ -96,7 +126,10 @@ def probe(seed: int) -> dict:
 
 
 def main() -> None:
-    runs = [probe(s) for s in SEEDS]
+    from concurrent.futures import ProcessPoolExecutor
+
+    with ProcessPoolExecutor(max_workers=len(SEEDS)) as pool:
+        runs = list(pool.map(probe, SEEDS))
 
     def avg(key: str) -> float:
         return statistics.fmean(r[key] for r in runs)
@@ -120,10 +153,24 @@ def main() -> None:
     print(f"  utility LCB quartiles      p25 {q[0]:.3f} | p50 {q[1]:.3f} | "
           f"p75 {q[2]:.3f}")
     print()
-    print("A posterior that has not left its prior cannot rank anything. The "
-          "constraint is\noutcomes / nodes, which no amount of better credit "
-          "assignment changes -- and it\ngets worse, not better, as the graph "
-          "grows.\n")
+    print(f"  attributed outcomes/run    {avg('attributed_outcomes'):.0f}")
+    print(f"  nodes credited per outcome {avg('nodes_per_outcome'):.1f}")
+    print()
+    print("  where the credit went (paper Table 4):")
+    print(f"    {'node type':14s} {'nodes':>6s} {'share of credit':>16s} "
+          f"{'median credit/node':>19s}")
+    types = sorted({t for r in runs for t in r["by_type"]},
+                   key=lambda t: -statistics.fmean(
+                       r["by_type"].get(t, {"share": 0})["share"] for r in runs))
+    for t in types:
+        present = [r["by_type"][t] for r in runs if t in r["by_type"]]
+        print(f"    {t:14s} {statistics.fmean(p['nodes'] for p in present):6.0f} "
+              f"{statistics.fmean(p['share'] for p in present):16.1%} "
+              f"{statistics.fmean(p['median_mass'] for p in present):19.2f}")
+    print()
+    print("Credit is conserved -- one unit per outcome -- and it follows activation,")
+    print("so it concentrates on nodes activated on most tasks (entities, summaries)")
+    print("while the episodes that hold task-specific precedents receive almost none.\n")
 
 
 if __name__ == "__main__":

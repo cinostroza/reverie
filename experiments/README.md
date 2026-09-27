@@ -1,7 +1,13 @@
 # Reverie experiments
 
-Thirteen experiments, all reproducible from a clean checkout. E1–E6 are notebooks;
+Thirteen experiments, all re-runnable from a clean checkout. E1–E6 are notebooks;
 E7–E10, E12 and E13 are scripted sweeps. E11 is the only one that calls a real model.
+
+**Reproducible statistically, not exactly.** The environment is deterministic given its
+seeds, but the memory engine is not: its recency score reads wall-clock time and node ids
+contain random bits, so repeating one seed gives different runs (4 repeats of seed 0:
+second-half success sd 0.041, against ~0.05 across seeds). Every interval here is computed
+across runs and includes that variation. `_mechanism_checks.py` measures it.
 
 ```bash
 pip install -e ".[experiments,dev]"
@@ -837,11 +843,31 @@ them lets one scale swamp the other. Per-channel normalisation is the shipped fi
 It is still not enough, and the reason is a hard bound rather than a tuning failure:
 
 ```
-total credit mass in the system == number of outcomes
-                                == 600 over this run
-nodes sharing it                == ~700 (650 episodes + ~50 lessons)
-→ 0.86 units of evidence per node, before splitting across a 9-item brief
+total credit mass in the system == number of attributed outcomes (590 of 600 per run)
+nodes credited per outcome      == ~40 (every node the recall activated, not the ~9 in the brief)
+nodes in the graph              == ~700 (600 episodes, ~50 lessons, ~50 entity/summary nodes)
 ```
+
+**Where the credit actually goes** (`_attribution_diagnostic.py`, recorded in
+`results/attribution_diagnostic.txt`; fallible-lesson condition, 4 runs):
+
+| node type | nodes | share of all credit | median credit / node |
+|---|---|---|---|
+| entity (a feature value or strategy name) | 27 | 47% | 7.70 |
+| failure-mode summary | 7 | 24% | 20.52 |
+| **episode** | **600** | **18%** | **0.06** |
+| lesson | 49 | 9% | 0.36 |
+| community summary | 18 | 2% | 0.23 |
+
+This is the mechanism, and it is sharper than "outcomes ÷ nodes". Entity nodes are matched
+exactly to the query's feature values and seed the spreading activation, so they sit at
+the top of the activation in every recall that involves their value, and credit by
+activation hands them the largest shares. ~70% of all credit goes to 34 nodes activated
+on most tasks, whose posteriors can only track the base success rate. The episodes that
+carry the precedents get 0.06 units each. Redistributing the entity/summary share to
+episodes and lessons proportionally would still leave the median episode at ~0.2 units.
+Separately: vote weighting applies to episodes only, so in the fallible-lesson condition
+attribution could reach a wrong lesson only through its rank.
 
 Measured on a live graph by `_attribution_diagnostic.py` (600 tasks, 4 seeds, reviewer at
 accuracy 0.6):
@@ -927,9 +953,11 @@ The honest claim is therefore: *Reverie wins where the same situations recur.* F
 on-call that is the realistic case — services fail in the same handful of ways — but a
 landscape of one-off incidents is not a fit, and the README must say so.
 
-Human review lifts every density and is the **only** thing that helps at 0.5
-tasks/context (0.197 → 0.231), because a lesson supplies knowledge that repetition
-otherwise has to earn.
+Human review lifts success at 8.3 tasks/context (+0.137 ±0.024) and 2.0 (+0.126 ±0.036),
+because a lesson supplies knowledge that repetition otherwise has to earn. At 0.5 it is
+**not significant** (+0.033 ±0.033; paired, 6 seeds): two lessons per reviewed session
+cannot cover 1,200 contexts in 600 tasks. (An earlier version of this paragraph said
+review helps at every density; the paired test does not support that at 0.5.)
 
 Latency stayed flat (~700 tokens, no growth) and wall-clock scaled roughly linearly
 with tasks, so nothing broke structurally at 1200 contexts.
@@ -1029,10 +1057,13 @@ headless via `claude -p`, 10 trials per condition, 40 calls total. Reproducible 
 | 4 | **10/10** | 0/10 | follows evidence |
 
 **The property holds.** With two or more contradicting precedents, Opus 5 overrides a
-confident human lesson unanimously. It is marginally more lesson-loyal than the scripted
-voter — which flips at one pair, where the model is split 4/6 — but the qualitative
-finding is the same, and the scripted agent is if anything the *less* lesson-loyal
-instrument. E10's error-mode taxonomy is not an artifact of the agent policy.
+confident human lesson unanimously. On the *same 40 briefs*, the scripted agent (with
+exploration off) follows the evidence 0/10, 2/10, 10/10, 10/10 — so at one pair the model
+(4/10) is, if anything, slightly *less* lesson-loyal than the scripted voter, and the two
+behave alike. (An earlier version said the model was the more lesson-loyal of the two and
+that the scripted agent "flips at one pair"; replaying the exact briefs through the
+scripted policy showed otherwise. `_mechanism_checks.py` does the replay.) E10's
+error-mode taxonomy is not an artifact of the agent policy.
 
 **And it explains the one failure mode mechanistically.** At **zero** contradicting
 episodes both agents follow the wrong lesson unanimously — there is nothing to
@@ -1067,11 +1098,19 @@ Re-measured 2026-09-04, 6 seeds, second-half success, guard off → guard on:
 | **H3** | small net negative under correct-scope review | −0.012 ±0.047 — zero within noise | ✅ confirmed (cheaper than predicted) |
 | **H4** | benefit tracks repetition density | no benefit to track | ⚪ vacuous |
 
-**And a case E12 never tested:** the guard with *no reviewer at all* is also inert
-(+0.006 ±0.020, 16 seeds). This needed checking because consolidation promotes
-corroborated episodes into lessons on its own, so the guard has candidates to act on even
-when no human ever speaks — it was a live hypothesis for the retrieval-arm regression
-until measured.
+**The guard with no reviewer is inert by construction** (+0.006 ±0.020, 16 seeds).
+`validate_scopes` only examines procedural nodes with provenance `asserted`, i.e.
+reviewer lessons, so with no reviewer it has nothing to examine. (An earlier note here
+claimed consolidation-generated lessons gave it candidates in the unreviewed arm; the
+code does not support that, and this measurement is only a sanity check.)
+
+**H4 re-measured** (`guard_density` sweep, over-broad review, 6 seeds): guard effect
++0.026 ±0.031 at 8.3 tasks/context, +0.012 ±0.033 at 2.0, −0.001 ±0.027 at 0.5. The
+point estimates fall with density as H4 predicted, but none is distinguishable from zero,
+so H4 is not supported.
+
+**How often it fires** (`_mechanism_checks.py`): about one narrowing operation per lesson
+written under over-broad review (37–46 operations against 36–46 lessons, 4 runs).
 
 **The guard fires and does nothing.** Under over-general review it narrows or demotes
 tens of nodes per run against 0 with the guard off, so the mechanism is active and

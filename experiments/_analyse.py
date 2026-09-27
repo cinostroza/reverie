@@ -241,6 +241,29 @@ def report_guard() -> None:
 
 
 
+def report_guard_density() -> None:
+    """E12 H4: the guard's paired effect at each repetition density."""
+    rows = load("guard_density")
+    if not rows:
+        print("\n### guard_density: no results")
+        return
+    cond = by_condition(rows, "success_2h")
+    main = by_condition(load("guard"), "success_2h")
+    table = [("tasks/context", "guard off", "guard on", "paired effect of guard")]
+    points = [("8.3 (72 ctx)", main.get("over_general/guard=False"),
+               main.get("over_general/guard=True"))]
+    points += [(f"{600 / int(n):.1f} ({n} ctx)", cond.get(f"{n}/guard=False"),
+                cond.get(f"{n}/guard=True")) for n in ("300", "1200")]
+    for label, off, on in points:
+        if not off or not on:
+            continue
+        (mo, bo, _), (mn, bn, _) = summarise(off), summarise(on)
+        d, band, _ = paired(off, on)
+        table.append((label, f"{mo:.3f} +/-{bo:.3f}", f"{mn:.3f} +/-{bn:.3f}",
+                      f"{d:+.3f} +/-{band:.3f} {'significant' if abs(d) > band else 'n.s.'}"))
+    _table("Scope guard vs repetition density, over-broad review (E12 H4)", table)
+
+
 def report_landscape() -> None:
     """Does the headline effect survive being averaged over landscapes?"""
     rows = load("landscape")
@@ -301,6 +324,7 @@ REPORTS = {
         "over_general", baseline="none", title="Over-generalisation (E10.3)"),
     "staleness": lambda: report_simple(
         "staleness", baseline="drift/none", title="Stale human knowledge (E10.4)"),
+    "guard_density": report_guard_density,
     "guard_baseline": lambda: report_simple(
         "guard_baseline", baseline="no_review/guard=False",
         title="Scope guard with no reviewer at all (E12 follow-up)"),

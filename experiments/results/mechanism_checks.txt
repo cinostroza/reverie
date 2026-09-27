@@ -1,0 +1,17 @@
+1. Scope guard under over-broad review (4 runs, 600 tasks)
+   seed 0:  39 narrowing operations, 46 lessons written
+   seed 1:  40 narrowing operations, 42 lessons written
+   seed 2:  37 narrowing operations, 36 lessons written
+   seed 3:  46 narrowing operations, 38 lessons written
+
+2. E11 briefs: runs that followed the evidence over the wrong lesson
+   contradicting pairs   claude-opus-5   scripted agent (same briefs)
+                     0        0/10           0/10
+                     1        4/10           2/10
+                     2       10/10          10/10
+                     4       10/10          10/10
+
+3. Reverie, seed 0, repeated 4 times: second-half success
+   0.413  0.470  0.440  0.510   (sd 0.041)
+   The environment is deterministic given a seed; the memory system is
+   not (wall-clock recency, random bits in node ids).

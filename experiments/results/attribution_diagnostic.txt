@@ -1,0 +1,30 @@
+
+Attribution diagnostic -- 600 tasks, 4 seeds, reviewer present at accuracy 0.6
+
+  outcomes observed          600
+  nodes sharing the credit   701 (49 of them human lessons)
+  -> credit units per node   0.86
+
+  median attributions/node   1.0
+  mean attributions/node     33.41
+  median for lessons only    22.4
+
+  nodes still at the prior   32.2%  (utility LCB exactly 0.25)
+  utility LCB range          0.172 - 0.413
+  utility LCB quartiles      p25 0.247 | p50 0.250 | p75 0.273
+
+  attributed outcomes/run    590
+  nodes credited per outcome 39.7
+
+  where the credit went (paper Table 4):
+    node type       nodes  share of credit  median credit/node
+    entity             27            46.8%                7.70
+    failure_mode        7            24.2%               20.52
+    episode           600            17.9%                0.06
+    lesson             49             9.4%                0.36
+    theme              18             1.8%                0.23
+
+Credit is conserved -- one unit per outcome -- and it follows activation,
+so it concentrates on nodes activated on most tasks (entities, summaries)
+while the episodes that hold task-specific precedents receive almost none.
+
