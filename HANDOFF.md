@@ -163,13 +163,17 @@ There is still no system TeX install. The paper is built with **tectonic**, a si
 self-contained binary (no install, no PATH change): download the Windows zip from
 github.com/tectonic-typesetting/tectonic/releases, then
 
-    tectonic -X compile paper/main.tex --keep-intermediates
+    TECTONIC=/path/to/tectonic python paper/build.py
 
-It fetches the packages it needs on first run. `--keep-intermediates` keeps `main.bbl`,
-which arXiv needs because it does **not** run BibTeX. The arXiv upload is exactly:
-`main.tex`, `neurips.sty`, `main.bbl`, `figures/fig1.pdf`. Always test-compile that set in
-an empty directory: that check caught a natbib author-year/numeric clash that the full
-build silently tolerated and arXiv would have rejected.
+It fetches the packages it needs on first run (and needs `pypdf`). The script builds the
+paper, packages the arXiv upload (`main.tex`, `neurips.sty`, `refs.bib`, `main.bbl`,
+`figures/fig1.pdf`; arXiv uses the `.bbl` and does not run BibTeX), rebuilds from the
+unpacked package alone, and **inspects that PDF**: every citation must be a number and
+the reference list must have one entry per cited key. Outputs go to `paper/dist/`.
+
+Do not replace that inspection with log greps. Two builds passed log checks and were
+broken: a natbib author-year/numeric clash, and a PDF with an empty reference list and
+`[?]` citations — tectonic re-runs BibTeX and reports a missing `.bib` only as a warning.
 
 Front matter is currently the **arXiv preprint** (author named, venue notice blanked).
 Do not use `[final]`: it prints "NeurIPS 2025" in the footer, which reads as a false
