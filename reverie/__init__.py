@@ -37,7 +37,7 @@ from .models import (
 from .recall import RecallEngine
 from .store import SQLiteStore
 
-__version__ = "0.1.0.dev0"
+__version__ = "0.1.0a1"
 
 __all__ = [
     "Reverie",

@@ -5,7 +5,7 @@
 > ⚠️ **Pre-alpha, and the thesis changed.** This project started out claiming that
 > *outcome attribution* — memories earning a track record and demoting themselves when
 > they hurt — was the differentiator. **We built it, measured it three ways, and it does
-> not work.** See [E7/E9](experiments/README.md). What does work is narrower and better
+> not work.** See [E7/E9](https://github.com/cinostroza/reverie/blob/main/experiments/README.md). What does work is narrower and better
 > evidenced. Numbers below are from synthetic benchmarks against an honest baseline, not
 > from production agents. Read [Known limitations](#known-limitations) first.
 
@@ -40,7 +40,13 @@ exists to make the next one better.
 ## Install
 
 ```bash
-pip install -e .                      # core: zero dependencies, stdlib sqlite3 only
+pip install reverie-memory            # core: zero dependencies, stdlib sqlite3 only
+```
+
+The distribution is `reverie-memory`; the import and the CLI are both `reverie`.
+To reproduce the experiments, work from a clone:
+
+```bash
 pip install -e ".[experiments,dev]"   # + numpy/scipy/pandas/matplotlib, pytest
 ```
 
@@ -109,11 +115,11 @@ far broader.
 - **Runs with no API key.** The no-LLM consolidation path builds the entity graph and
   episodic spine from structured episode fields alone, and is tested in CI.
 
-Full design: [`reverie_hld.md`](reverie_hld.md).
+Full design: [`reverie_hld.md`](https://github.com/cinostroza/reverie/blob/main/reverie_hld.md).
 
 ## Experiments
 
-Ten experiments in [`experiments/`](experiments/), six as reproducible notebooks. They
+Ten experiments in [`experiments/`](https://github.com/cinostroza/reverie/tree/main/experiments), six as reproducible notebooks. They
 changed the design repeatedly, including three reversals of decisions in the design doc.
 
 | | Question | Headline result |

@@ -1,23 +1,26 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
-name = "reverie"
-version = "0.1.0.dev0"
-description = "Long-term memory for AI agents that learns which memories are worth having."
+# "reverie" on PyPI is held by an unrelated, empty project, so the distribution
+# name differs. The import name and the CLI are still `reverie`.
+name = "reverie-memory"
+dynamic = ["version"]
+description = "Precise precedent retrieval for AI agents, with a human in the loop."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 authors = [{ name = "Reverie contributors" }]
 keywords = ["agent", "memory", "llm", "knowledge-graph", "mcp"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: Apache Software License",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
 ]
 
 # The core is deliberately dependency-free: stdlib sqlite3 only.
@@ -40,8 +43,21 @@ dev = ["pytest>=8.0", "pytest-cov>=4.0"]
 [project.scripts]
 reverie = "reverie.cli:main"
 
+[project.urls]
+Homepage = "https://github.com/cinostroza/reverie"
+Repository = "https://github.com/cinostroza/reverie"
+Issues = "https://github.com/cinostroza/reverie/issues"
+
+[tool.hatch.version]
+path = "reverie/__init__.py"
+
 [tool.hatch.build.targets.wheel]
 packages = ["reverie"]
+
+# The sdist is the package, not the research repo: experiments, paper and
+# literature stay on GitHub.
+[tool.hatch.build.targets.sdist]
+include = ["/reverie", "/tests", "/README.md", "/LICENSE"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
