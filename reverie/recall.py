@@ -12,7 +12,7 @@ from __future__ import annotations
 import math
 import random
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from ._math import utility_lcb
 from .config import Config
@@ -682,8 +682,6 @@ def _effective_quotas(cfg, scored) -> dict[str, float]:
 
 
 def _with_budget(cfg, budget: int):
-    from copy import replace
-
     return replace(cfg, budget_tokens=budget)
 
 
