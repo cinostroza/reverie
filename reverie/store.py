@@ -119,13 +119,19 @@ class SQLiteStore:
             timeout=_BUSY_TIMEOUT_MS / 1000,
             check_same_thread=check_same_thread,
         )
-        self.conn.row_factory = sqlite3.Row
-        self.conn.execute("PRAGMA journal_mode=WAL")
-        self.conn.execute("PRAGMA synchronous=NORMAL")
-        self.conn.execute("PRAGMA foreign_keys=ON")
-        self.conn.execute(f"PRAGMA busy_timeout={_BUSY_TIMEOUT_MS}")
-        schema.migrate(self.conn)
-        schema.check_embedding_model(self.conn, embedding_model, embedding_dim)
+        # If setup fails the caller never gets `self`, so it cannot close the
+        # connection -- and an open handle keeps the file locked on Windows.
+        try:
+            self.conn.row_factory = sqlite3.Row
+            self.conn.execute("PRAGMA journal_mode=WAL")
+            self.conn.execute("PRAGMA synchronous=NORMAL")
+            self.conn.execute("PRAGMA foreign_keys=ON")
+            self.conn.execute(f"PRAGMA busy_timeout={_BUSY_TIMEOUT_MS}")
+            schema.migrate(self.conn)
+            schema.check_embedding_model(self.conn, embedding_model, embedding_dim)
+        except BaseException:
+            self.conn.close()
+            raise
         self.embedding_dim = embedding_dim
 
     # -- lifecycle ---------------------------------------------------------
