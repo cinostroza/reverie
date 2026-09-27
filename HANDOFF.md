@@ -37,6 +37,7 @@ plus a channel for humans to teach*, on workloads where situations recur.
 | E7–E13 | ✅ now real drivers: `_run_sweeps.py` + `_analyse.py`, results cached as JSON |
 | Benchmark reproducibility | ✅ fixed — was salted by `hash()`, see §5.6 |
 | NeurIPS checklist | ❌ not started |
+| PyPI package | ⚠️ `reverie-memory`, release workflow built; first upload is manual, see §7 |
 
 ---
 
@@ -93,6 +94,7 @@ experiments/        README.md is the lab notebook (E1-E13) — the real record.
 paper/              main.tex, refs.bib (14 verified citations), check_refs.py
   figures/fig1.pdf  Figure 1: density crossover + lever sizes.
 literature/         survey.md + gap-analysis.md — positioning, verified
+.github/workflows/publish.yml   PyPI release pipeline (§7).
 findings.md         project memory / synthesis. Read at the start of any session.
 refined-approach.md the "trust the advice, check the scope" design
 reverie_hld.md      v0.4 design doc. Carries a "Read this first" reversal table.
@@ -182,7 +184,33 @@ anonymous `\author`.
 
 ---
 
-## 7. Do these first, in order
+## 7. Releasing to PyPI
+
+The distribution is **`reverie-memory`** — `reverie` on PyPI is an unrelated, empty
+project. The import and the CLI are both still `reverie`. The version lives only in
+`reverie/__init__.py`; `pyproject.toml` reads it from there.
+
+Releases go out through `.github/workflows/publish.yml` with PyPI trusted publishing, so
+no token exists anywhere. To release:
+
+    # bump __version__ in reverie/__init__.py, commit, push, then
+    gh release create v0.1.0a2 --prerelease --generate-notes   # drop --prerelease for a final
+
+Publishing the release builds once, checks the tag equals the version, runs the suite
+against the *built wheel* on Python 3.11–3.14, and only then uploads. A bare tag push does
+nothing. `gh workflow run publish.yml` is a dry run: build and test, no upload.
+
+A version can never be re-uploaded, even after deleting it from PyPI. A bad release is
+fixed by the next version, never by replacing files.
+
+One-time setup needs the owner's PyPI account, so it is done by hand: upload `0.1.0a1`
+with `twine`, then add the trusted publisher under pypi.org → `reverie-memory` → Settings →
+Publishing (owner `cinostroza`, repository `reverie`, workflow `publish.yml`, environment
+`pypi`). If https://pypi.org/p/reverie-memory exists, the upload is done.
+
+---
+
+## 8. Do these first, in order
 
 *Items 1 and 3 of the previous list are done: all six notebooks were re-executed against
 the current engine, E7–E13 now have real drivers, and Figure 1 is built. What remains:*
@@ -208,7 +236,7 @@ the current engine, E7–E13 now have real drivers, and Figure 1 is built. What 
 
 ---
 
-## 8. The one big open bet
+## 9. The one big open bet
 
 **Build an LLM distiller.** It is the only untested capability that could plausibly move
 the headline number, and the logic is direct: lessons are worth ~4× the retrieval
@@ -232,7 +260,7 @@ constraint. Directed review at 10% vs random review at 10% is a clean experiment
 
 ---
 
-## 9. Honest strategic read
+## 10. Honest strategic read
 
 The project as originally conceived — *"memory that learns which memories are worth
 having"* — is dead, and the field already named the wall.
